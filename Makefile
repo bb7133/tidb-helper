@@ -23,7 +23,6 @@ $(BUILD_DIR):
 
 # don't use directory so we can force update the projects each time.
 TIDB_SOURCE:
-	echo "tidb soure"
 	$(call fetch_source, $(TIDB_SOURCE),tidb)
 
 TIKV_SOURCE:
@@ -93,6 +92,7 @@ $(ARTIFACT_PACKAGE): $(ARTIFACT_BINARY)
 	install -D -m 0644 etc/service/tikv-server.service ${ARTIFACT_PACKAGE}/usr/lib/systemd/system/tikv.service
 	install -D -m 0644 etc/service/pd-server.service ${ARTIFACT_PACKAGE}/usr/lib/systemd/system/pd.service
 	mkdir -p ${ARTIFACT_PACKAGE}/var/lib/tikv ${ARTIFACT_PACKAGE}/var/lib/tikv ${ARTIFACT_PACKAGE}/var/lib/pd
+
 .PHONY: deb
 deb: $(ARTIFACT_PACKAGE)
 	bash scripts/gen-deb-control.sh $(TAG) | install -D /dev/stdin ${ARTIFACT_PACKAGE}/DEBIAN/control
@@ -104,6 +104,26 @@ deb: $(ARTIFACT_PACKAGE)
 		-v $(CURDIR)/${BUILD_DIR}:/build \
 		tidb-deb-builder:${TAG} fakeroot dpkg-deb --build ${ARTIFACT_PACKAGE} /build/dist
 	rm -rf ${ARTIFACT_PACKAGE}
+
+.PHONY: brew
+brew: $(ARTIFACT_DIR) source
+	make -C $(TIDB_SOURCE)
+	make -C $(TIKV_SOURCE)
+	make -C $(PD_SOURCE)
+
+	install -D -m 0755 $(TIDB_SOURCE)/bin/tidb-server ${ARTIFACT_PACKAGE}/usr/bin/tidb-server
+	install -D -m 0755 $(TIKV_SOURCE)/bin/tikv-server ${ARTIFACT_PACKAGE}/usr/bin/tikv-server
+	install -D -m 0755 $(TIKV_SOURCE)/bin/tikv-ctl ${ARTIFACT_PACKAGE}/usr/bin/tikv-ctl
+	install -D -m 0755 $(PD_SOURCE)/bin/pd-server ${ARTIFACT_PACKAGE}/usr/bin/pd-server
+	install -D -m 0755 $(PD_SOURCE)/bin/pd-ctl ${ARTIFACT_PACKAGE}/usr/bin/pd-ctl
+	install -D -m 0755 $(PD_SOURCE)/bin/pd-recover ${ARTIFACT_PACKAGE}/usr/bin/pd-recover
+	install -D -m 0644 $(TIDB_SOURCE)/tidb/config/config.toml.example ${ARTIFACT_PACKAGE}/etc/tidb/config.toml.example
+	install -D -m 0644 $(TIKV_SOURCE)/tikv/etc/config-template.toml ${ARTIFACT_PACKAGE}/etc/tikv/config.toml.example
+	install -D -m 0644 $(PD_SOURCE)/conf/config.toml ${ARTIFACT_PACKAGE}/etc/pd/config.toml.example
+	install -D -m 0644 etc/service/tidb-server.service ${ARTIFACT_PACKAGE}/usr/lib/systemd/system/tidb.service
+	install -D -m 0644 etc/service/tikv-server.service ${ARTIFACT_PACKAGE}/usr/lib/systemd/system/tikv.service
+	install -D -m 0644 etc/service/pd-server.service ${ARTIFACT_PACKAGE}/usr/lib/systemd/system/pd.service
+	mkdir -p ${ARTIFACT_PACKAGE}/var/lib/tikv ${ARTIFACT_PACKAGE}/var/lib/tikv ${ARTIFACT_PACKAGE}/var/lib/pd
 
 .PHONY: clean-dist clean-bin clean-all
 clean-dist:
