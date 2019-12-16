@@ -107,23 +107,28 @@ deb: $(ARTIFACT_PACKAGE)
 
 .PHONY: brew
 brew: $(ARTIFACT_DIR) source
-	make -C $(TIDB_SOURCE)
-	make -C $(TIKV_SOURCE)
-	make -C $(PD_SOURCE)
+	make -C $(TIDB_SOURCE) server
+	make -C $(TIKV_SOURCE) release
+	make -C $(PD_SOURCE) build tools
 
-	install -D -m 0755 $(TIDB_SOURCE)/bin/tidb-server ${ARTIFACT_PACKAGE}/usr/bin/tidb-server
-	install -D -m 0755 $(TIKV_SOURCE)/bin/tikv-server ${ARTIFACT_PACKAGE}/usr/bin/tikv-server
-	install -D -m 0755 $(TIKV_SOURCE)/bin/tikv-ctl ${ARTIFACT_PACKAGE}/usr/bin/tikv-ctl
-	install -D -m 0755 $(PD_SOURCE)/bin/pd-server ${ARTIFACT_PACKAGE}/usr/bin/pd-server
-	install -D -m 0755 $(PD_SOURCE)/bin/pd-ctl ${ARTIFACT_PACKAGE}/usr/bin/pd-ctl
-	install -D -m 0755 $(PD_SOURCE)/bin/pd-recover ${ARTIFACT_PACKAGE}/usr/bin/pd-recover
-	install -D -m 0644 $(TIDB_SOURCE)/tidb/config/config.toml.example ${ARTIFACT_PACKAGE}/etc/tidb/config.toml.example
-	install -D -m 0644 $(TIKV_SOURCE)/tikv/etc/config-template.toml ${ARTIFACT_PACKAGE}/etc/tikv/config.toml.example
-	install -D -m 0644 $(PD_SOURCE)/conf/config.toml ${ARTIFACT_PACKAGE}/etc/pd/config.toml.example
-	install -D -m 0644 etc/service/tidb-server.service ${ARTIFACT_PACKAGE}/usr/lib/systemd/system/tidb.service
-	install -D -m 0644 etc/service/tikv-server.service ${ARTIFACT_PACKAGE}/usr/lib/systemd/system/tikv.service
-	install -D -m 0644 etc/service/pd-server.service ${ARTIFACT_PACKAGE}/usr/lib/systemd/system/pd.service
-	mkdir -p ${ARTIFACT_PACKAGE}/var/lib/tikv ${ARTIFACT_PACKAGE}/var/lib/tikv ${ARTIFACT_PACKAGE}/var/lib/pd
+	mkdir -p \
+		${ARTIFACT_PACKAGE}/var/lib/tidb \
+		${ARTIFACT_PACKAGE}/var/lib/tikv \
+		${ARTIFACT_PACKAGE}/var/lib/pd \
+		${ARTIFACT_PACKAGE}/usr/bin \
+		${ARTIFACT_PACKAGE}/etc/tidb \
+		${ARTIFACT_PACKAGE}/etc/tikv \
+		${ARTIFACT_PACKAGE}/etc/pd
+
+	install -m 0755 $(TIDB_SOURCE)/bin/tidb-server ${ARTIFACT_PACKAGE}/usr/bin/tidb-server
+	install -m 0755 $(TIKV_SOURCE)/target/release/tikv-server ${ARTIFACT_PACKAGE}/usr/bin/tikv-server
+	install -m 0755 $(TIKV_SOURCE)/target/release/tikv-ctl ${ARTIFACT_PACKAGE}/usr/bin/tikv-ctl
+	install -m 0755 $(PD_SOURCE)/bin/pd-server ${ARTIFACT_PACKAGE}/usr/bin/pd-server
+	install -m 0755 $(PD_SOURCE)/bin/pd-ctl ${ARTIFACT_PACKAGE}/usr/bin/pd-ctl
+	install -m 0755 $(PD_SOURCE)/bin/pd-recover ${ARTIFACT_PACKAGE}/usr/bin/pd-recover
+	install -m 0644 $(TIDB_SOURCE)/config/config.toml.example ${ARTIFACT_PACKAGE}/etc/tidb/config.toml.example
+	install -m 0644 $(TIKV_SOURCE)/etc/config-template.toml ${ARTIFACT_PACKAGE}/etc/tikv/config.toml.example
+	install -m 0644 $(PD_SOURCE)/conf/config.toml ${ARTIFACT_PACKAGE}/etc/pd/config.toml.example
 
 .PHONY: clean-dist clean-bin clean-all
 clean-dist:
